@@ -1,4 +1,4 @@
-import { QueryInterface } from 'sequelize';
+import { DataTypes, QueryInterface } from 'sequelize';
 
 export default {
   /**
@@ -31,12 +31,184 @@ export default {
    * As a cinema owner I don't want to configure the seating for every show
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  up: (queryInterface: QueryInterface): Promise<void> => {
-    throw new Error('TODO: implement migration in task 4');
+  up: async (queryInterface: QueryInterface): Promise<void> => {
+    // throw new Error('TODO: implement migration in task 4');
+    await queryInterface.createTable('movies', {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+    });
+  
+    await queryInterface.createTable('shows', {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      movieId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'movies',
+          key: 'id',
+        },
+      },
+      startTime: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      soldOut: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+    });
+  
+    await queryInterface.createTable('showrooms', {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+    });
+  
+    await queryInterface.createTable('showroom_shows', {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      showroomId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'showrooms',
+          key: 'id',
+        },
+      },
+      showId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'shows',
+          key: 'id',
+        },
+      },
+    });
+  
+    await queryInterface.createTable('pricing', {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      showId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'shows',
+          key: 'id',
+        },
+      },
+      price: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+    });
+  
+    await queryInterface.createTable('seat_types', {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      premiumPercentage: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+    });
+  
+    await queryInterface.createTable('seats', {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      showroomId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'showrooms',
+          key: 'id',
+        },
+      },
+      seatTypeId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'seat_types',
+          key: 'id',
+        },
+      },
+      row: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      number: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+    });
+    await queryInterface.createTable('bookings', {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      seatId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'seats',
+          key: 'id',
+        },
+      },
+      showId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'shows',
+          key: 'id',
+        },
+      },
+    });
   },
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  down: (queryInterface: QueryInterface) => {
+  down: async (queryInterface: QueryInterface) => {
     // do nothing
   },
 };

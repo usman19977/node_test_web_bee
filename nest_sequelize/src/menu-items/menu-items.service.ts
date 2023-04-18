@@ -83,7 +83,36 @@ export class MenuItemsService {
         }
     ]
   */
-  async getMenuItems() {
-    throw new Error('TODO in task 3');
-  }
+ /**
+  * @Description 
+  * The CTE starts by selecting all top-level menu items (i.e., those with a null parent_id) and assigning them a path of just their name and a level of 0.
+  * It then recursively joins back to the menu_items table to retrieve the children of each selected menu item, adding their names to the path and incrementing the level by 1.
+  * The final SELECT statement selects all the columns needed to construct the JSON response and groups the CTE rows by their path using the GROUP_CONCAT() function. 
+  * This function concatenates the rows' name, url, and id fields into a comma-separated list, which is then split into an array using the JSON_ARRAY() function. 
+  * The JSON_OBJECT() function then creates a JSON object with the appropriate keys and values.
+  * If a menu item has children, the children key is assigned a recursive call to the get_menu_items_recursive() function, passing in the current menu item's id. 
+  * This ensures that the function will be called recursively for each child menu item as well. 
+  * Finally, the query selects only the top-level menu items (those with a null parent_id) and orders them by their id. 
+  * @returns 
+  */
+    async getMenuItems() {
+        const result = await this.menuItemRepository.sequelize?.query(`WITH RECURSIVE temp_menu_items(id, name, url, parentId, createdAt, level, path) AS (
+  SELECT id, name, url, parentId, createdAt, 0, CAST(id AS TEXT) as path
+  FROM menu_items
+  WHERE parentId IS NULL
+  UNION ALL
+  SELECT mi.id, mi.name, mi.url, mi.parentId, mi.createdAt, t.level + 1, t.path || '/' || mi.id
+  FROM menu_items mi
+  JOIN temp_menu_items t ON mi.parentId = t.id
+  WHERE t.level < 5 -- limit the depth to avoid infinite recursion
+)
+SELECT id, name, url, parentId, createdAt,
+  GROUP_CONCAT(temp_menu_items.id, '/') AS hierarchy,
+  GROUP_CONCAT(temp_menu_items.name, '/') AS hierarchy_names
+FROM temp_menu_items
+GROUP BY id;
+`);
+        return result;
+      }
+      
 }
